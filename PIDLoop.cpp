@@ -1,6 +1,7 @@
 #define PI 3.14159265
 #include <math.h>
 #include "WPILib.h"
+#include "Constants.h"
 
 class PIDMoveSource : PIDSource { //extends PIDSource - for the PIDController
   double moveValue; //gyro value
@@ -19,13 +20,16 @@ class PIDMoveOutput : PIDOutput {
   }
 };
 
-class PIDLoop {
+class PIDLoop { //TODO: make a .h file
 
   AHRS gyro;
   Aimer aimer; //TJ's vision code
+  RobotDrive driveTrain;
 
-  PIDLoop() :
-    gyro(I2C::Port::kMXP, 200) //update rate is 200Hz
+  PIDLoop(RobotDrive *driveTrain_, AHRS *gyro_) :
+    gyro(gyro_), //update rate is 200Hz
+    aimer(),
+    driveTrain(driveTrain_)
     {}
 
   void pid() {
@@ -36,19 +40,17 @@ class PIDLoop {
     PIDMoveOutput angleOutput; //angle pid loop output variable
     PIDMoveOutput xOutput; //angle pid loop source variable
     Timer timer;
-    pidAngle(.1, .1, .1, angleSource, angleOutput, .006) //TODO: tune
-    pidX(.1, .1, .1, xSource, xOutput, .006); //TODO: tune
+    pidAngle(Constants::angleP, Constants::angleI, Constants::angleD, angleSource, angleOutput, Constants::gearPIDIterationTime) //TODO: tune | also may need to flip the negative on the p value depending on which direction positive mecanum rotates
+    pidX(Constants::xOffsetP, Constants::xOffsetI, Constants::xOffsetD, xSource, xOutput, Constants::gearPIDIterationTime); //TODO: tune | also may need to add a negative to the p value depending on which direction +x is in mecanum
     float angleOffset;
     float xOffset;
-    float angleMaxError = 3; //TODO: arbitrary value, find actual - maybe make it a scalar based on the distance from the pin so that it accounts for actual difference in x over the y distance
-    float xMaxError = 3; //TODO: arbitrary value, find actual
     float distance; //distance from the gear pin (hypotenuse)
-    float offset; //-1 to 1 value of where the target is on the camera itself - needed for the math of calculating the angle offset (-1 is all the way left, 1 is all the way right)
+    float offset; //-1 to 1 value of where the target is on the camera itself - needed for the math of calculating the angle offset (-1 is all the way left of the camera view, 1 is all the way right)
 
     pidAngle.Enable();
     pidX.Enable();
-    pidAngle.SetOutputRange(-.5, .5); //safety - mecanum drive turns really fast
-    pidX.SetOutputRange(-1.0, 1.0); //safety
+    pidAngle.SetOutputRange(Constants::angleOutputMin, Constants::angleOutputMax); //safety - mecanum drive turns really fast
+    pidX.SetOutputRange(Constants::xOutputMin, Constants::xOutputMax); //safety
 
     distance = aimer.GetDistance();
     offset = aimer.GetOffset();
@@ -58,15 +60,18 @@ class PIDLoop {
 
     angleSource.Set(angleOffset);
     xSource.Set(xOffset);
+
     timer.Reset();
     timer.Start();
-    while ((fabs(pidAngle.Get())) > angleMaxError || (fabs(pidX.Get()) > xMaxError) && timer.Get() < 5) { //timer.Get() should be in seconds but will need to test to confirm
+
+    while (((fabs(pidAngle.Get()) > Constants::angleMaxError) || (fabs(pidX.Get()) > Constants::xMaxError)) && timer.Get() < 5) { //timer.Get() should be in seconds but will need to test to confirm
       angleOffset = gyro.GetYaw();
       xOffset = distance * (sin(gyro.GetYaw() * PI / 180) - (offset / 2));
       angleSource.Set(angleOffset);
       xSource.Set(xOffset);
-      driveTrain.MecanumDrive_Cartesian(pidX.Get(), 0, pidAngle.Get(), gyro.GetYaw());
-      Wait(.006); //max update rate of the gyro is .005 - TODO: will need to change based on how fast the camera updates
+      driveTrain->MecanumDrive_Cartesian(pidX.Get(), 0, pidAngle.Get(), gyro.GetYaw());
+      Wait(Constants::gearPIDIterationTime); //TODO: change based on camera update rate
+      //TODO: this code should also be adjusted (eventually) to move the robot in the y direction if it doesn't
     }
   }
 };
