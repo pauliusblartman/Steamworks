@@ -1,6 +1,6 @@
 #include "WPILib.h"
-
 #include "Constants.h"
+#include "PIDLoop.h"
 
 #include <math.h>
 #include <thread>
@@ -13,7 +13,9 @@ class Robot : public SampleRobot {
 
 	RobotDrive robotDrive;
 	Joystick driveStick;
+	Joystick operatorStick;
   AHRS gyro;
+	PIDLoop pid;
 
 public:
 	Robot();
