@@ -2,9 +2,6 @@
 #include <math.h>
 #include "WPILib.h"
 
-class PIDSource {}; ////////
-class PIDOutput {};
-
 class PIDMoveSource : PIDSource { //extends PIDSource - for the PIDController
   double moveValue; //gyro value
   public: double PIDGet() { //created by WPILib - to give the value to the PIDController
