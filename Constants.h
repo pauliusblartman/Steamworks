@@ -3,6 +3,14 @@
 
 namespace Constants {
 
+  //Pin Definitions
+  static constexpr int frontLeftDriveChannel = 99;
+  static constexpr int frontrearLeftDriveChannel = 99;
+  static constexpr int frontRightDriveChannel = 99;
+  static constexpr int rearRightDriveChannel = 99;
+  static constexpr int driveStickChannel = 0;
+  static constexpr int operatorStickChannel = 1;
+
   //Gear PID loop
   static constexpr float angleP = -.01;
   static constexpr float angleI = .01;
@@ -17,6 +25,10 @@ namespace Constants {
   static constexpr float angleOutputMax = .5;
   static constexpr float xOutputMin = -1.0;
   static constexpr float xOutputMax = 1.0;
+
+  //Joystick Buttons
+  static constexpr int runGearMoveThreadButton = 99;
+  static constexpr int cancelGearMoveThreadButton = 99;
 
 };
 #endif
