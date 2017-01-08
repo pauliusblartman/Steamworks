@@ -1,7 +1,6 @@
 #include "WPILib.h"
 #include "Constants.h"
 #include "PIDLoop.h"
-
 #include <math.h>
 #include <thread>
 #include <fstream>

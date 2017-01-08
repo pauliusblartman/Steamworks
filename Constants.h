@@ -29,5 +29,6 @@ namespace Constants {
   //Joystick Buttons
   static constexpr int runGearMoveThreadButton = 99;
   static constexpr int cancelGearMoveThreadButton = 99;
+
 };
 #endif

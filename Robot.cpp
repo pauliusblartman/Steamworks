@@ -50,4 +50,5 @@ void Robot::OperatorControl()
 void Robot::Autonomous() {
 
 }
+
 START_ROBOT_CLASS(Robot)
