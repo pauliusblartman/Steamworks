@@ -37,7 +37,7 @@ void Robot::OperatorControl()
 
 		if (operatorStick.GetRawButton(Constants::runGearMoveThreadButton)) {
 			gearMoveThreadRunBool = true;
-		}
+		} //should be able to reopen the thread after it's closed by the cancel button
 
 		Wait(0.005); // wait 5ms to avoid hogging CPU cycles
 	}

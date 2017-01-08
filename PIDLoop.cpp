@@ -33,12 +33,7 @@ int PIDLoop::runPID() {
   timer.Reset();
   timer.Start();
 
-  while (((fabs(pidAngle.Get()) > Constants::angleMaxError) || (fabs(pidX.Get()) > Constants::xMaxError)) && timer.Get() < 5) { //timer.Get() should be in seconds but will need to test to confirm
-    if (joystick.GetRawButton(Constants::cancelGearMoveThreadButton)) {
-      pidAngle.Disable();
-      pidX.Disable();
-      return 1;
-    }
+  while ((((fabs(pidAngle.Get()) > Constants::angleMaxError) || (fabs(pidX.Get()) > Constants::xMaxError)) && timer.Get() < 5) && !joystick.GetRawButton(Constants::cancelGearMoveThreadButton)) { //timer.Get() should be in seconds but will need to test to confirm
     angleOffset = gyro.GetYaw();
     xOffset = distance * (sin(gyro.GetYaw() * PI / 180) - (offset / 2));
     angleSource.Set(angleOffset);
