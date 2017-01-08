@@ -26,8 +26,8 @@ class PIDLoop { //TODO: make a .h file
   Aimer aimer; //TJ's vision code
   RobotDrive driveTrain;
 
-  PIDLoop(RobotDrive *driveTrain_) :
-    gyro(I2C::Port::kMXP, 200), //update rate is 200Hz
+  PIDLoop(RobotDrive *driveTrain_, AHRS *gyro_) :
+    gyro(gyro_), //update rate is 200Hz
     aimer(),
     driveTrain(driveTrain_)
     {}

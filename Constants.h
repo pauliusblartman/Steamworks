@@ -1,16 +1,7 @@
-
 #ifndef SRC_CONSTANTS_H
 #define SRC_CONSTANTS_H
 
 namespace Constants {
-  //Joysticks and Buttons
-  const static int driveStickChannel = 0;
-
-  //Pin Definitions
-  const static int frontLeftChannel = 2;
-  const static int rearLeftChannel = 3;
-  const static int frontRightChannel = 1;
-  const static int rearRightChannel = 0;
 
   //Gear PID loop
   static constexpr float angleP = -.01;

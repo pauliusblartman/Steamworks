@@ -11,8 +11,9 @@
 
 class Robot : public SampleRobot {
 
-	RobotDrive robotDrive;	// robot drive system
-	Joystick stick;			// only joystick
+	RobotDrive robotDrive;
+	Joystick driveStick;
+  AHRS gyro;
 
 public:
 	Robot();
