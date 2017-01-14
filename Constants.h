@@ -4,10 +4,10 @@
 namespace Constants {
 
   //Pin Definitions
-  static constexpr int frontLeftDriveChannel = 99;
-  static constexpr int frontrearLeftDriveChannel = 99;
-  static constexpr int frontRightDriveChannel = 99;
-  static constexpr int rearRightDriveChannel = 99;
+  static constexpr int frontLeftDriveChannel = 2;
+  static constexpr int rearLeftDriveChannel = 3;
+  static constexpr int frontRightDriveChannel = 1;
+  static constexpr int rearRightDriveChannel = 0;
   static constexpr int driveStickChannel = 0;
   static constexpr int operatorStickChannel = 1;
 
