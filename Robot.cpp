@@ -74,6 +74,7 @@ void Robot::OperatorControl()
 
 
 		if(driveStick.GetPOV() != -1) {
+			//need to get it to turn correct direction - if (angleOffset - desiredAngle < 0 then angleError = -abs(angleOffset - desiredAngle) ???
 			std::ofstream logger; logger.open("/var/loggerFile.txt", std::ofstream::out);
 			logger << "Loop entered\n";
 			float desiredAngle = driveStick.GetPOV();
