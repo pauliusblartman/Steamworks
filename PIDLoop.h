@@ -1,34 +1,31 @@
-#define PI 3.14159265
-#include <math.h>
-#include "Constants.h"
-//#include "PIDMoveSource.h"
-//#include "PIDMoveOutput.h"
-#include "Aimer.h"
-#include "AHRS.h"
 #include "WPILib.h"
+#include "Constants.h"
+#include "PIDLoop.h"
+#include <math.h>
+#include <fstream>
 
 #ifndef SRC_PIDLOOP_H
 #define SRC_PIDLOOP_H
 
 class PIDLoop {
 
-	AHRS gyro;
-	Aimer aimer;
-	frc::Joystick joystick;
-	frc::RobotDrive driveTrain;
-	/*PIDMoveSource angleSource;
-	PIDMoveSource xSource; //xOffset pid loop source variable
-	PIDMoveOutput angleOutput; //angle pid loop output variable
-	PIDMoveOutput xOutput; //angle pid loop source variable
-	PIDController pidAngle; //angle pid loop
-	PIDController pidX; //xOffset pid loop*/
-	frc::Timer timer;
-
-
+  float k_p_Angle;
+  float k_i_Angle;
+  float k_d_Angle;
+  float p_Angle;
+  float i_Angle;
+  float d_Angle;
+  float angle_error;
+  float last_angle_error;
+  float angleOffset;
+  float angleOutput;
+  float angleMaxError;
+  float iteration_time;
 
 public:
-	PIDLoop(RobotDrive *driveTrain_, Joystick *joystick_, AHRS *gyro_);
-	int runPID();
+	PIDLoop();
+	float PIDAngle(float yaw, float desiredAngle);
+	float PIDX();
 };
 
-#endif
+#endif /* SRC_ROBOT_H_ */
