@@ -1,6 +1,5 @@
 #include "WPILib.h"
 #include "Constants.h"
-#include "PIDLoop.h"
 #include <math.h>
 #include <fstream>
 
@@ -17,15 +16,15 @@ class PIDLoop {
   float d_Angle;
   float angle_error;
   float last_angle_error;
-  float angleOffset;
   float angleOutput;
   float angleMaxError;
   float iteration_time;
 
 public:
 	PIDLoop();
+	void setAngle(float pAngleInput, float iAngleInput, float dAngleInput);
 	float PIDAngle(float yaw, float desiredAngle);
-	float PIDX();
+	float PIDX(float distance, float angleOffset, float cameraOffset);
 };
 
 #endif /* SRC_ROBOT_H_ */

@@ -31,6 +31,7 @@ void Robot::RobotInit() {}
  */
 void Robot::OperatorControl()
 {
+	pid.setAngle(SmartDashboard::GetNumber("angle_p", .015), SmartDashboard::GetNumber("angle_i", .001), SmartDashboard::GetNumber("angle_d", .001));
 	robotDrive.SetSafetyEnabled(false);
 	//bool gearMoveThreadRunBool = false;
 	//std::thread gearMoveThread(moveToGearThreadFunction, &gearMoveThreadRunBool, &pid); //thread not needed yet - might need to be implemented later
@@ -45,6 +46,7 @@ void Robot::OperatorControl()
 	{
 		angleOutput = 0; //reset output so that if the pid loop isn't being called it's not reserved from the last time it's called
 		angle = gyro.GetYaw() < 0 ? 360 + gyro.GetYaw() : gyro.GetYaw();
+
 		if(driveStick.GetPOV() != -1) { //turn to angle 0, 90, 180, 270
 			angleOutput = pid.PIDAngle(angle, driveStick.GetPOV()); //call pid loop
 		}
@@ -70,7 +72,65 @@ void Robot::OperatorControl()
 }
 
 void Robot::Autonomous() {
+	//This function so far will go through and try to target onto the peg and try to run onto it.
+	float tryAngle = 0.0;//This is the angle to which the robot will try to aim
+	bool isDone;
+	switch((int)SmartDashboard::GetNumber("Starting Position", 0))//This gets the starting position from the user
+	{
+	case 1://Position 1: straight from the middle peg
+		tryAngle = 0.0;
+		robotDrive.MecanumDrive_Cartesian(0, 1.0, 0.0);//Drive forward?
+		isDone = false;
+		while (!isDone)//This could be better
+		{
+			if (gyro.GetDisplacementY() >= 2.0)//~6 ft?
+			{
+				robotDrive.MecanumDrive_Cartesian(0,0,0);//Stop robot
+				isDone = true;//Stop the loop
+			}
+		}
+		break;
 
+	case 2://Position 2: on the left
+		tryAngle = 60.0;
+		robotDrive.MecanumDrive_Cartesian(0, 1.0, 0.0);
+		isDone = false;
+		while (!isDone)//Forward 9 feet
+		{
+			if (gyro.GetDisplacementY() >= 3.0)//9 ft?
+			{
+				robotDrive.MecanumDrive_Cartesian(0,0,0);
+				isDone = true;
+			}
+		}
+		robotDrive.MecanumDrive_Cartesian(0, 0, 0.5);//Turn right?
+		isDone = false;
+		while (!isDone)
+		{
+			if (gyro.GetYaw() >= 60)//60 deg?
+			{
+				robotDrive.MecanumDrive_Cartesian(0,0,0);
+				isDone = true;
+			}
+		}
+		break;
+
+	}
+
+	while (!(fabs(aimer.GetAngleToGear()) <= 3.0))//This adjusts the accuracy of the aiming of the robot
+	{
+		int sign = (aimer.GetAngleToGear() < 0) ? -1 : 1;//Which direction to turn
+		robotDrive.MecanumDrive_Cartesian(0, 0, 0.5 * sign);//Turn?
+		while (!(gyro.GetYaw() >= tryAngle + sign * 20));//Keep turning to 20 deg away?
+		robotDrive.MecanumDrive_Cartesian(0, 1.0, 0);
+		while (gyro.GetYaw() + aimer.GetAngleToGear() >= tryAngle);//Keep going striaght until the robot lines up with the peg about
+		robotDrive.MecanumDrive_Cartesian(0, 0, 0.5 * sign * -1);
+		while (!(gyro.GetYaw() >= tryAngle));//Turn back toward the peg
+	}
+
+	//drive until hit while braking
+	//drop gear
+	//back up quickly
 }
 
 START_ROBOT_CLASS(Robot)

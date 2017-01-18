@@ -7,9 +7,17 @@ PIDLoop::PIDLoop() {
   p_Angle = 0;
   i_Angle = 0;
   d_Angle = 0;
+  angle_error = 0;
+  angleOutput = 0;
   last_angle_error = 0;
   angleMaxError = 3;
   iteration_time = .005;
+}
+
+void PIDLoop::setAngle(float pAngleInput, float iAngleInput, float dAngleInput) {
+	k_p_Angle = pAngleInput;
+	k_i_Angle = iAngleInput;
+	k_d_Angle = dAngleInput;
 }
 
 float PIDLoop::PIDAngle(float angleOffset, float desiredAngle) {
@@ -18,32 +26,34 @@ float PIDLoop::PIDAngle(float angleOffset, float desiredAngle) {
   logger << "Loop entered\n";
 
   angle_error = angleOffset - desiredAngle;
-  angle_error = angle_error > 180 ? -(angle_error - 180) : angle_error;
+  angle_error = fabs(angle_error) > 180 ? -(angle_error - 180) : angle_error;
 
   p_Angle = k_p_Angle * angle_error;
-  //i_Angle += k_i_Angle * (angle_error * iteration_time);
-  //d_Angle = k_d_Angle * ((angle_error - last_angle_error) / iteration_time);
+  i_Angle += k_i_Angle * (angle_error * iteration_time);
+  d_Angle = k_d_Angle * ((angle_error - last_angle_error) / iteration_time);
   angleOutput = p_Angle + i_Angle + d_Angle;
   last_angle_error = angle_error;
 
   //angleOutput = (angle_error / 180) * .7 + .2;
 
-  SmartDashboard::PutNumber("Desired Angle", desiredAngle);
-  SmartDashboard::PutNumber("Angle Output", angleOutput);
-  SmartDashboard::PutNumber("angleOffset", angleOffset);
-  SmartDashboard::PutNumber("angle_error", angle_error);
-  angleOutput = fabs(angleOutput) < .15 ? std::copysign(.15, angleOutput) : angleOutput;
-  angleOutput = fabs(angleOutput) > .6 ? std::copysign(.6, angleOutput) : angleOutput;
+
+  angleOutput = fabs(angleOutput) < .23 ? std::copysign(.23, angleOutput) : angleOutput;
+  angleOutput = fabs(angleOutput) > .8 ? std::copysign(.8, angleOutput) : angleOutput;
   //angleOutput = angle_error < 0 ? angleOutput : -angleOutput;
   angleOutput = -angleOutput;
   logger << p_Angle << " " << angle_error << " " << angleOutput << "\n";
   frc::Wait(iteration_time);
   logger.close();
 
+  SmartDashboard::PutNumber("Desired Angle", desiredAngle);
+  SmartDashboard::PutNumber("Angle Output", angleOutput);
+  SmartDashboard::PutNumber("angleOffset", angleOffset);
+  SmartDashboard::PutNumber("angle_error", angle_error);
+
   return angleOutput;
 }
 
-float PIDLoop::PIDX() {
+float PIDLoop::PIDX(float distance, float angleOffset, float cameraOffset) {
   float k_p_X = .05;
   float k_i_X = .05;
   float k_d_X = .05;
@@ -55,13 +65,9 @@ float PIDLoop::PIDX() {
   float xOffset;
   float xOutput;
   float xMaxError = 3;
-  float distance;
-  float cameraOffset;
 
   std::ofstream logger; logger.open("/var/loggerFile.txt", std::ofstream::out);
   logger << "Loop entered\n";
-  distance = aimer.GetDistanceToGear();
-  cameraOffset = aimer.GetOffset();
   xOffset = distance * (sin(angleOffset) - (cameraOffset / 2)); //math is currently on my phone but will be put on google drive and in notebook
 
 
@@ -73,8 +79,6 @@ float PIDLoop::PIDX() {
   xOutput = p_X + i_X + d_X;
   last_x_error = x_error;
 
-  distance = aimer.GetDistanceToGear();
-  cameraOffset = aimer.GetOffset();
   xOffset = distance * (sin(angleOffset) - (cameraOffset / 2)); //math is currently on my phone but will be put on google drive and in notebook
 
   x_error = xOffset;
