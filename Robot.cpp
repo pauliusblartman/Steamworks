@@ -15,7 +15,11 @@ Robot::Robot() :
 		operatorStick(Constants::operatorStickChannel),
 		gyro(I2C::Port::kMXP, 200),
 		pid(),
-		aimer()
+		aimer(),
+		leftProx(1, 0),
+		rightProx(3, 2),
+		leftIR(4),
+		rightIR(5)
 {
 	robotDrive.SetExpiration(0.1);
 	robotDrive.SetInvertedMotor(RobotDrive::kFrontLeftMotor, false);
@@ -42,6 +46,9 @@ void Robot::OperatorControl()
 	float angle;
 	float angleOutput = 0; //pid loop output
 
+	leftProx.SetAutomaticMode(true);
+	rightProx.SetAutomaticMode(true);
+
 	while (IsOperatorControl() && IsEnabled())
 	{
 		angleOutput = 0; //reset output so that if the pid loop isn't being called it's not reserved from the last time it's called
@@ -49,6 +56,8 @@ void Robot::OperatorControl()
 
 		if(driveStick.GetPOV() != -1) { //turn to angle 0, 90, 180, 270
 			angleOutput = pid.PIDAngle(angle, driveStick.GetPOV()); //call pid loop
+		} else {
+			pid.resetPID();
 		}
 
 		driveX = fabs(driveStick.GetX()) < .05 ? 0.0 : driveStick.GetX(); //deadzones - need to figure out deadzones better (RecycleRush code might have them)
@@ -58,13 +67,21 @@ void Robot::OperatorControl()
 /*		if (operatorStick.GetRawButton(Constants::runGearMoveThreadButton)) {
 			gearMoveThreadRunBool = true;
 		} //should be able to reopen the thread after it's closed by the cancel button*/ //thread code - not needed right now
-		SmartDashboard::PutNumber("Angle to gear", aimer.GetAngleToGear());
 		frc::Wait(0.005); // wait 5ms to avoid hogging CPU cycles
+		SmartDashboard::PutNumber("leftProx", leftProx.GetRangeInches());
+		SmartDashboard::PutNumber("rightProx", rightProx.GetRangeInches());
+		SmartDashboard::PutBoolean("leftIR", !leftIR.Get());
+		SmartDashboard::PutBoolean("rightIR", !rightIR.Get());
+
+		SmartDashboard::PutNumber("Angle to gear", aimer.GetAngleToGear());
+		SmartDashboard::PutNumber("angleOutput", angleOutput);
 		SmartDashboard::PutNumber("Angle", angle);
 		SmartDashboard::PutBoolean("Is Rotating", gyro.IsRotating());
 		SmartDashboard::PutNumber("Requested Update rate", gyro.GetRequestedUpdateRate());
 		SmartDashboard::PutNumber("Actual Update rate", gyro.GetActualUpdateRate());
 		SmartDashboard::PutNumber("getPOV", driveStick.GetPOV());
+
+		SmartDashboard::PutNumber("angleToGear", aimer.GetAngleToGear());
 	}
 	//gearMoveThreadRunBool = false;
 	//gearMoveThread.join();
@@ -73,9 +90,10 @@ void Robot::OperatorControl()
 
 void Robot::Autonomous() {
 	//This function so far will go through and try to target onto the peg and try to run onto it.
+	int failsafe = 0;
 	float tryAngle = 0.0;//This is the angle to which the robot will try to aim
 	bool isDone;
-	switch((int)SmartDashboard::GetNumber("Starting Position", 0))//This gets the starting position from the user
+	switch((int)SmartDashboard::GetNumber("Starting Position", 1))//This gets the starting position from the user
 	{
 	case 1://Position 1: straight from the middle peg
 		tryAngle = 0.0;
@@ -117,7 +135,7 @@ void Robot::Autonomous() {
 
 	}
 
-	while (!(fabs(aimer.GetAngleToGear()) <= 3.0))//This adjusts the accuracy of the aiming of the robot
+	while (!(fabs(aimer.GetAngleToGear()) <= 3.0) && failsafe < 500)//This adjusts the accuracy of the aiming of the robot
 	{
 		int sign = (aimer.GetAngleToGear() < 0) ? -1 : 1;//Which direction to turn
 		robotDrive.MecanumDrive_Cartesian(0, 0, 0.5 * sign);//Turn?
@@ -126,6 +144,7 @@ void Robot::Autonomous() {
 		while (gyro.GetYaw() + aimer.GetAngleToGear() >= tryAngle);//Keep going striaght until the robot lines up with the peg about
 		robotDrive.MecanumDrive_Cartesian(0, 0, 0.5 * sign * -1);
 		while (!(gyro.GetYaw() >= tryAngle));//Turn back toward the peg
+		frc::Wait(.01);
 	}
 
 	//drive until hit while braking

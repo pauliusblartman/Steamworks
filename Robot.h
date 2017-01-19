@@ -18,6 +18,10 @@ class Robot : public SampleRobot {
 	AHRS gyro;
 	PIDLoop pid;
 	Aimer aimer;
+	Ultrasonic leftProx;
+	Ultrasonic rightProx;
+	DigitalInput leftIR;
+	DigitalInput rightIR;
 
 public:
 	Robot();

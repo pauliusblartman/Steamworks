@@ -22,6 +22,7 @@ class PIDLoop {
 
 public:
 	PIDLoop();
+	void resetPID();
 	void setAngle(float pAngleInput, float iAngleInput, float dAngleInput);
 	float PIDAngle(float yaw, float desiredAngle);
 	float PIDX(float distance, float angleOffset, float cameraOffset);

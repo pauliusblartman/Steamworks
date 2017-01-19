@@ -14,6 +14,12 @@ PIDLoop::PIDLoop() {
   iteration_time = .005;
 }
 
+void PIDLoop::resetPID() {
+	p_Angle = 0;
+	i_Angle = 0;
+	d_Angle = 0;
+}
+
 void PIDLoop::setAngle(float pAngleInput, float iAngleInput, float dAngleInput) {
 	k_p_Angle = pAngleInput;
 	k_i_Angle = iAngleInput;
@@ -38,15 +44,19 @@ float PIDLoop::PIDAngle(float angleOffset, float desiredAngle) {
 
 
   angleOutput = fabs(angleOutput) < .23 ? std::copysign(.23, angleOutput) : angleOutput;
-  angleOutput = fabs(angleOutput) > .8 ? std::copysign(.8, angleOutput) : angleOutput;
+  angleOutput = fabs(angleOutput) > 1.0 ? std::copysign(1.0, angleOutput) : angleOutput;
   //angleOutput = angle_error < 0 ? angleOutput : -angleOutput;
+  if (fabs(angle_error) < Constants::angleMaxError) {
+	  i_Angle = 0;
+	  angleOutput = 0;
+  }
   angleOutput = -angleOutput;
   logger << p_Angle << " " << angle_error << " " << angleOutput << "\n";
   frc::Wait(iteration_time);
   logger.close();
 
+  SmartDashboard::PutNumber("Accumulated i", i_Angle);
   SmartDashboard::PutNumber("Desired Angle", desiredAngle);
-  SmartDashboard::PutNumber("Angle Output", angleOutput);
   SmartDashboard::PutNumber("angleOffset", angleOffset);
   SmartDashboard::PutNumber("angle_error", angle_error);
 
