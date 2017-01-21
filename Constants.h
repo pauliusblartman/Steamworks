@@ -18,7 +18,7 @@ namespace Constants {
   static constexpr float xOffsetP = .01;
   static constexpr float xOffsetI = .01;
   static constexpr float xOffsetD = .01;
-  static constexpr float angleMaxError = 3;
+  static constexpr float angleMaxError = 1;
   static constexpr float xMaxError = 3;
   static constexpr float gearPIDIterationTime = .006; //max update rate of the gyro is .005 - TODO: will need to change based on how fast the camera updates
   static constexpr float angleOutputMin = -.5;

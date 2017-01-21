@@ -7,7 +7,7 @@ Aimer::Aimer()
 
 float Aimer::GetAngleToGear()
 {
-	return (float)table->GetNumber("averageAzimuthOut", 42);
+	return (float)table->GetNumber("averageAzimuthOut-0", 42);
 }
 
 float Aimer::GetDistanceToGear()

@@ -7,6 +7,8 @@
 #include <thread>
 #include <fstream>
 
+#define PI 3.14159265
+
 #ifndef SRC_ROBOT_H_
 #define SRC_ROBOT_H_
 
@@ -18,6 +20,10 @@ class Robot : public SampleRobot {
 	AHRS gyro;
 	PIDLoop pid;
 	Aimer aimer;
+	Ultrasonic leftProx;
+	Ultrasonic rightProx;
+	DigitalInput leftIR;
+	DigitalInput rightIR;
 
 public:
 	Robot();

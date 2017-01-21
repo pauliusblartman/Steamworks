@@ -1,152 +1,210 @@
 #include "PIDLoop.h"
 
+PIDLoop::PIDLoop() {
+  k_p_Angle = .025;
+  k_i_Angle = .001;
+  k_d_Angle = .001;
+  p_Angle = 0;
+  i_Angle = 0;
+  d_Angle = 0;
+  angle_error = 0;
+  angleOutput = 0;
+  last_angle_error = 0;
+  angleMaxError = 3;
+  iteration_time = .005;
 
-PIDLoop::PIDLoop(RobotDrive *driveTrain_, Joystick *joystick_, AHRS *gyro_) :
-	gyro(I2C::Port::kMXP),
-	aimer(),
-	joystick(Constants::operatorStickChannel),
-	driveTrain(Constants::frontLeftDriveChannel, Constants::rearLeftDriveChannel, Constants::frontRightDriveChannel, Constants::rearRightDriveChannel),
-	timer()
-{}
+  k_p_Y = .025;
+  k_i_Y = .001;
+  k_d_Y = .001;
+  p_Y = 0;
+  i_Y = 0;
+  d_Y = 0;
+  y_error = 0;
+  last_y_error = 0;
+  yOutput = 0;
+  yMaxError = 6;
 
+  k_p_X = .05;
+  k_i_X = .05;
+  k_d_X = .05;
+  p_X = 0;
+  i_X = 0;
+  d_X = 0;
+  x_error = 0;
+  last_x_error = 0;
+  xOutput = 0;
+  xMaxError = 0;
 
-int PIDLoop::runPID() {
-	float k_p_Angle = .001;
-	float k_i_Angle = .001;
-	float k_d_Angle = .001;
-	float k_p_X = .05;
-	float k_i_X = .05;
-	float k_d_X = .05;
-	float p_Angle;
-	float i_Angle = 0;
-	float d_Angle;
-	float p_X;
-	float i_X = 0;
-	float d_X;
-	float angle_error;
-	float x_error;
-	float last_angle_error = 0;
-	float last_x_error = 0;
-	float angleOffset;
-	float xOffset;
-	float angleOutput;
-	float xOutput;
-	float angleMaxError = 3;
-	float xMaxError = 3;
-	float iteration_time = .005;
-	float distance;
-	float cameraOffset;
-	int failsafe = 0;
-
-	distance = aimer.GetDistanceToGear();
-	cameraOffset = aimer.GetOffset();
-	angleOffset = gyro.GetYaw() + 180;
-	xOffset = distance * (sin(angleOffset) - (cameraOffset / 2)); //math is currently on my phone but will be put on google drive and in notebook
-
-
-	float desiredAngle = 90;
-	angle_error = angleOffset - desiredAngle;
-
-	//angle_error = angleOffset - aimer.GetAngleToGear();
-	x_error = xOffset;
-	while (((fabs(angle_error) > angleMaxError) || (fabs(x_error) > xMaxError)) && failsafe < 500) {
-
-		p_Angle = k_p_Angle * angle_error;
-		i_Angle += k_i_Angle * (angle_error * iteration_time);
-		d_Angle = k_d_Angle * ((angle_error - last_angle_error) / iteration_time);
-		angleOutput = p_Angle + i_Angle + d_Angle;
-		last_angle_error = angle_error;
-
-		p_X = k_p_X * x_error;
-		i_X += k_i_X * (x_error * iteration_time);
-		d_X = k_d_X * ((x_error - last_x_error) / iteration_time);
-		xOutput = p_X + i_X + d_X;
-		last_x_error = x_error;
-
-		distance = aimer.GetDistanceToGear();
-		cameraOffset = aimer.GetOffset();
-		angleOffset = gyro.GetYaw() + 180;
-		xOffset = distance * (sin(angleOffset) - (cameraOffset / 2)); //math is currently on my phone but will be put on google drive and in notebook
-
-
-		angle_error = angleOffset - desiredAngle;
-
-		//angle_error = angleOffset - aimer.GetAngleToGear();
-		x_error = xOffset;
-		SmartDashboard::PutNumber("Angle Output", angleOutput);
-		xOutput = 0;
-		driveTrain.MecanumDrive_Cartesian(xOutput, 0, angleOutput, gyro.GetYaw() + 180);
-
-		frc::Wait(iteration_time);
-		failsafe++;
-	}
-	return 1;
 }
 
+void PIDLoop::resetPIDAngle() {
+	p_Angle = 0;
+	i_Angle = 0;
+	d_Angle = 0;
+}
+
+void PIDLoop::setAngle(float pAngleInput, float iAngleInput, float dAngleInput) {
+	k_p_Angle = pAngleInput;
+	k_i_Angle = iAngleInput;
+	k_d_Angle = dAngleInput;
+}
+
+void PIDLoop::setX(float pXInput, float iXInput, float dXInput) {
+	k_p_X = pXInput;
+	k_i_X = iXInput;
+	k_d_X = dXInput;
+}
+
+void PIDLoop::setY(float pYInput, float iYInput, float dYInput) {
+	k_p_Y = pYInput;
+	k_i_Y = iYInput;
+	k_d_Y = dYInput;
+}
+float PIDLoop::PIDAngle(float angleOffset, float desiredAngle) {
+  //put in separate loop - not a while loop - keep checking and updating every runthrough of the normal loop - boolean for if this is running to stop you from manually moving the robot while the loop is running
+  std::ofstream logger; logger.open("/var/loggerFile.txt", std::ofstream::out);
+  logger << "Loop entered\n";
+
+  angle_error = angleOffset - desiredAngle;
+  angle_error = fabs(angle_error) > 180 ? -(angle_error - 180) : angle_error;
+
+  p_Angle = k_p_Angle * angle_error;
+  i_Angle += k_i_Angle * (angle_error * iteration_time);
+  d_Angle = k_d_Angle * ((angle_error - last_angle_error) / iteration_time);
+  angleOutput = p_Angle + i_Angle + d_Angle;
+  last_angle_error = angle_error;
+
+  //angleOutput = (angle_error / 180) * .7 + .2;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-/*PIDLoop::PIDLoop(RobotDrive *driveTrain_, Joystick *joystick_, AHRS *gyro_) :
-  gyro(I2C::Port::kMXP),
-  //gyro(gyro_), //update rate is 200Hz
-  aimer(),
-  //joystick(joystick_),
-  joystick(Constants::operatorStickChannel),
-  driveTrain(Constants::frontLeftDriveChannel, Constants::rearLeftDriveChannel, Constants::frontRightDriveChannel, Constants::rearRightDriveChannel),
-  //driveTrain(driveTrain_),
-  pidAngle(.1, .1, .1, gyro, angleOutput, .05),
-  pidX(.1, .1, .1, xSource, xOutput, .05),
-  //pidAngle(Constants::angleP, Constants::angleI, Constants::angleD, gyro, angleOutput, Constants::gearPIDIterationTime), //TODO: tune | also may need to flip the negative on the p value depending on which direction positive mecanum rotates
-  //pidX(Constants::xOffsetP, Constants::xOffsetI, Constants::xOffsetD, xSource, xOutput, Constants::gearPIDIterationTime), //TODO: tune | also may need to add a negative to the p value depending on which direction +x is in mecanum
-  timer()
-  {}
-
-int PIDLoop::runPID() {
-  float angleOffset;
-  float xOffset;
-  float distance; //distance from the gear pin (hypotenuse)
-  float offset; //-1 to 1 value of where the target is on the camera itself - needed for the math of calculating the angle offset (-1 is all the way left of the camera view, 1 is all the way right)
-
-  pidAngle.Enable();
-  pidX.Enable();
-  pidAngle.SetOutputRange(Constants::angleOutputMin, Constants::angleOutputMax); //safety - mecanum drive turns really fast
-  pidX.SetOutputRange(Constants::xOutputMin, Constants::xOutputMax); //safety
-
-  distance = aimer.GetDistanceToGear();
-  offset = aimer.GetOffset();
-
-  angleOffset = gyro.GetYaw();
-  xOffset = distance * (sin(gyro.GetYaw() * PI / 180) - (offset / 2)); //math is currently on my phone but will be put on google drive and in notebook
-
-//  angleSource.Set(angleOffset);
-// xSource.Set(xOffset);
-
-  timer.Reset();
-  timer.Start();
-
-  while ((((fabs(pidAngle.Get()) > Constants::angleMaxError) || (fabs(pidX.Get()) > Constants::xMaxError)) && timer.Get() < 5) && !joystick.GetRawButton(Constants::cancelGearMoveThreadButton)) { //timer.Get() should be in seconds but will need to test to confirm
-    angleOffset = gyro.GetYaw();
-    xOffset = distance * (sin(gyro.GetYaw() * PI / 180) - (offset / 2));
-    //angleSource.Set(angleOffset);
-    //xSource.Set(xOffset);
-    driveTrain.MecanumDrive_Cartesian(pidX.Get(), 0, pidAngle.Get(), gyro.GetYaw());
-    frc::Wait(Constants::gearPIDIterationTime); //TODO: change based on camera update rate
-    //TODO: this code should also be adjusted (eventually) to move the robot in the y direction if it doesn't
+  angleOutput = fabs(angleOutput) < .23 ? std::copysign(.23, angleOutput) : angleOutput;
+  angleOutput = fabs(angleOutput) > 1.0 ? std::copysign(1.0, angleOutput) : angleOutput;
+  //angleOutput = angle_error < 0 ? angleOutput : -angleOutput;
+  if (fabs(angle_error) < Constants::angleMaxError) {
+	  i_Angle = 0;
+	  angleOutput = 0;
   }
-  
-  pidAngle.Disable();
-  pidX.Disable();
+  angleOutput = -angleOutput;
+  logger << p_Angle << " " << angle_error << " " << angleOutput << "\n";
+  frc::Wait(iteration_time);
+  logger.close();
 
-  return 1;
+  SmartDashboard::PutNumber("Accumulated i", i_Angle);
+  SmartDashboard::PutNumber("Desired Angle", desiredAngle);
+  SmartDashboard::PutNumber("angleOffset", angleOffset);
+  SmartDashboard::PutNumber("angle_error", angle_error);
+
+  return angleOutput;
+}
+
+/*float PIDLoop::PIDX(float distance, float angleOffset, float cameraOffset) {
+  float k_p_X = .05;
+  float k_i_X = .05;
+  float k_d_X = .05;
+  float p_X;
+  float i_X = 0;
+  float d_X;
+  float x_error;
+  float last_x_error = 0;
+  float xOffset;
+  float xOutput;
+  float xMaxError = 3;
+
+  std::ofstream logger; logger.open("/var/loggerFile.txt", std::ofstream::out);
+  logger << "Loop entered\n";
+  xOffset = distance * (sin(angleOffset) - (cameraOffset / 2)); //math is currently on my phone but will be put on google drive and in notebook
+
+
+  x_error = xOffset;
+
+  p_X = k_p_X * x_error;
+  i_X += k_i_X * (x_error * iteration_time);
+  d_X = k_d_X * ((x_error - last_x_error) / iteration_time);
+  xOutput = p_X + i_X + d_X;
+  last_x_error = x_error;
+
+  xOffset = distance * (sin(angleOffset) - (cameraOffset / 2)); //math is currently on my phone but will be put on google drive and in notebook
+
+  x_error = xOffset;
+
+  xOutput = 0;
+
+  frc::Wait(iteration_time);
+
+  logger.close();
+
+  return 0;
 }*/
+
+float PIDLoop::PIDX(float angleToGear) {
+  std::ofstream logger; logger.open("/var/loggerFile.txt", std::ofstream::out);
+  logger << "Loop entered\n";
+
+
+  x_error = angleToGear;
+
+  p_X = k_p_X * x_error;
+  i_X += k_i_X * (x_error * iteration_time);
+  d_X = k_d_X * ((x_error - last_x_error) / iteration_time);
+  xOutput = p_X + i_X + d_X;
+  last_x_error = x_error;
+
+  xOutput = fabs(xOutput) > .7 ? std::copysign(.7, xOutput) : xOutput;
+  xOutput = fabs(xOutput) < .2 ? std::copysign(.2, xOutput) : xOutput;
+
+  if (x_error < xMaxError) {
+	  xOutput = 0;
+	  i_X = 0;
+  }
+
+  frc::Wait(iteration_time);
+
+  logger.close();
+
+  SmartDashboard::PutNumber("x_error", x_error);
+
+  return xOutput;
+}
+
+float PIDLoop::PIDY(float lDistance, float rDistance) {
+  float averageDistance;
+
+  std::ofstream logger; logger.open("/var/loggerFile.txt", std::ofstream::out);
+  logger << "Loop entered\n";
+  if (lDistance > 0 && lDistance < 100 && rDistance > 0 && rDistance < 100) {
+	  averageDistance = (lDistance + rDistance) / 2;
+  }
+  else if (lDistance < 0 || lDistance > 100) {
+	  averageDistance = rDistance;
+  } else if (rDistance < 0 || rDistance > 100) {
+	  averageDistance = lDistance;
+  } else {
+	  SmartDashboard::PutString("PIDY Status", "Ultrasonic Error");
+	  return 0;
+  }
+  y_error = averageDistance - 12;
+
+  p_Y = k_p_Y * y_error;
+  i_Y += k_i_Y * (y_error * iteration_time);
+  d_Y = k_d_Y * ((y_error - last_y_error) / iteration_time);
+  yOutput = p_Y + i_Y + d_Y;
+  last_y_error = y_error;
+
+  yOutput = fabs(yOutput) > .7 ? std::copysign(.7, yOutput) : yOutput;
+  yOutput = fabs(yOutput) < .2 ? std::copysign(.2, yOutput) : yOutput;
+
+  if (y_error < yMaxError) {
+	  yOutput = 0;
+	  i_Y = 0;
+  }
+
+  frc::Wait(iteration_time);
+
+  logger.close();
+  SmartDashboard::PutNumber("y_error", y_error);
+  SmartDashboard::PutNumber("avgDist", averageDistance);
+  SmartDashboard::PutNumber("i_Y", i_Y);
+
+
+  return -yOutput;
+}
